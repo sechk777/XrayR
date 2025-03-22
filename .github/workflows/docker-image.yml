@@ -8,7 +8,7 @@ on:
       - published
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: sechk777/xrayr
+  IMAGE_NAME: sechk777/XrayR
 
 jobs:
   build:
