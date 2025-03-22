@@ -193,6 +193,20 @@ jobs:
           file: ./XrayR-${{ steps.get_filename.outputs.ASSET_NAME }}.zip*
           tag: ${{ github.ref }}
           file_glob: true
+
+      - name: Get current timestamp
+        id: get_time
+        run: |
+          echo "CURRENT_TIME=$(date -u +"%Y%m%d%H%M%S")" >> $GITHUB_ENV
+
+      - name: Create tag
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git tag "release-${CURRENT_TIME}"
+          git push origin "release-${CURRENT_TIME}"
+        env:
+          CURRENT_TIME: ${{ env.CURRENT_TIME }}
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
