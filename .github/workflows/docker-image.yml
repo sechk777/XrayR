@@ -3,15 +3,13 @@ permissions:
   packages: write
 name: Publish Docker image
 on:
-  push:
-    branches:
-      - master
+  workflow_dispatch:
   release:
     types:
       - published
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: sechk777/XrayR
+  IMAGE_NAME: sechk777/xrayr
 
 jobs:
   build:
