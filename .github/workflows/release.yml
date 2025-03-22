@@ -1,7 +1,3 @@
-permissions:
-  contents: write
-  packages: write
-
 name: Build and Release
 
 on:
@@ -193,37 +189,3 @@ jobs:
           file: ./XrayR-${{ steps.get_filename.outputs.ASSET_NAME }}.zip*
           tag: ${{ github.ref }}
           file_glob: true
-
-      - name: Get current timestamp
-        id: get_time
-        run: |
-          echo "CURRENT_TIME=$(date -u +"%Y%m%d%H%M%S")" >> $GITHUB_ENV
-
-      - name: Create tag
-        run: |
-          git config user.name "GitHub Actions"
-          git config user.email "actions@github.com"
-          git tag "release-${CURRENT_TIME}"
-          git push origin "release-${CURRENT_TIME}"
-        env:
-          CURRENT_TIME: ${{ env.CURRENT_TIME }}
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: "Release ${{ github.ref }}"
-          body: "自动构建并发布的二进制包"
-          draft: false
-          prerelease: false
-      - name: Upload binaries to release
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./XrayR-${{ steps.get_filename.outputs.ASSET_NAME }}.zip
-          asset_name: XrayR-${{ steps.get_filename.outputs.ASSET_NAME }}.zip
-          asset_content_type: application/zip
