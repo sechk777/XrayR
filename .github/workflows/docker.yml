@@ -1,11 +1,15 @@
+permissions:
+  contents: read
+  packages: write
 name: Publish Docker image
 on:
+  workflow_dispatch:
   release:
     types:
       - published
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: xrayr-project/xrayr
+  IMAGE_NAME: sechk777/xrayr
 
 jobs:
   build:
@@ -45,15 +49,28 @@ jobs:
           platforms: ${{ matrix.platform }}
           labels: ${{ steps.meta.outputs.labels }}
           outputs: type=image,name=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }},push-by-digest=true,name-canonical=true,push=true
+      - name: Generate artifact name suffix
+        id: artifact_suffix # Give this step an ID
+        run: |
+          # Use bash parameter expansion to replace / with -
+          platform_safe="${{ matrix.platform }}"
+          echo "suffix=${platform_safe//\//-}" >> $GITHUB_OUTPUT
       - name: Export digest
+        env:
+          ARTIFACT_SUFFIX: ${{ steps.artifact_suffix.outputs.suffix }}
         run: |
           mkdir -p /tmp/digests
           digest="${{ steps.build.outputs.digest }}"
-          touch "/tmp/digests/${digest#sha256:}"          
+          touch "/tmp/digests/${{ env.ARTIFACT_SUFFIX }}"
       - name: Upload digest
         uses: actions/upload-artifact@v4
+        # --- FIX ---
+        # Define an environment variable within this step using the output
+        env:
+          ARTIFACT_SUFFIX: ${{ steps.artifact_suffix.outputs.suffix }}
+        # Use the environment variable to construct the name
         with:
-          name: digests
+          name: "digests-${{ env.ARTIFACT_SUFFIX }}"
           path: /tmp/digests/*
           if-no-files-found: error
           retention-days: 1
@@ -66,8 +83,9 @@ jobs:
       - name: Download digests
         uses: actions/download-artifact@v4.1.7
         with:
-          name: digests
+          pattern: digests-*
           path: /tmp/digests
+          merge-multiple: true
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
       - name: Docker meta
@@ -92,3 +110,4 @@ jobs:
       - name: Inspect image
         run: |
           docker buildx imagetools inspect ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.version }}
+
